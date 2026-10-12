@@ -34,10 +34,12 @@ The prompt tells the model to answer using only the retrieved notes, and to repl
    .venv\Scripts\activate
    pip install -r requirements.txt
    ```
-3. Build the notes database (once, or whenever the PDF changes):
+3. Add your own lecture slides as a PDF. Course slides are usually copyrighted, so they are not included in this repo and `*.pdf` is git-ignored.
+4. Build the notes database (once, or whenever the PDF changes):
    ```
-   python ingest_notes.py
+   python ingest_notes.py path\to\your_slides.pdf
    ```
+   With no argument it looks for `Chap3_Metro_Ethernet.pdf` in the project folder. The example questions in the web UI and `eval_retrieval.py` were written for that chapter (Computer Networks, Ch. 3: Metro Ethernet), so update them for your own notes.
 
 ## Usage
 

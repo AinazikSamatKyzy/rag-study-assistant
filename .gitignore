@@ -5,3 +5,5 @@ __pycache__/
 .fastembed_cache/
 study/
 .claude/
+*.pdf
+*.pptx

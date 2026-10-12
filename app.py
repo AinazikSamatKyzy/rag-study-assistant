@@ -1,5 +1,6 @@
 """Web UI for the study assistant. Run: python app.py, then open http://127.0.0.1:5000"""
 
+import os
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -42,5 +43,12 @@ def ask():
         return jsonify({"error": message}), 500
 
 
+@app.get("/healthz")
+def healthz():
+    """Liveness check for Kubernetes: the web process is up (does not touch Ollama)."""
+    return jsonify({"ok": True})
+
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    # In a container set HOST=0.0.0.0 so the port is reachable from outside.
+    app.run(host=os.environ.get("HOST", "127.0.0.1"), port=5000, debug=False)

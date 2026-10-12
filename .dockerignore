@@ -1,0 +1,14 @@
+.venv/
+.git/
+.github/
+.claude/
+__pycache__/
+*.pyc
+chroma_db/
+.fastembed_cache/
+study/
+media/
+k8s/
+*.pptx
+*.pdf
+!samples/kubernetes_notes.pdf

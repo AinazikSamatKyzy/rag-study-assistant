@@ -1,0 +1,15 @@
+[
+  {"question": "What does a MAN connect?", "pages": [4]},
+  {"question": "What topology does a metropolitan network usually use?", "pages": [5, 6]},
+  {"question": "What is the difference between metro access and metro core?", "pages": [6]},
+  {"question": "Which IEEE standard defined DQDB and how fast was it?", "pages": [7]},
+  {"question": "How does a node get permission to send in DQDB?", "pages": [8]},
+  {"question": "What do the busy and request bits in a DQDB slot mean?", "pages": [9]},
+  {"question": "What speeds did SMDS support?", "pages": [10]},
+  {"question": "What does an add-drop multiplexer do?", "pages": [12]},
+  {"question": "Why does TDM waste bandwidth for bursty data traffic?", "pages": [14, 15]},
+  {"question": "What is Metro Ethernet and why use it?", "pages": [18]},
+  {"question": "What is the difference between full mesh and partial mesh?", "pages": [21]},
+  {"question": "How are voice and video prioritized in Metro Ethernet?", "pages": [22, 24]},
+  {"question": "What is the difference between wrap and steering in RPR?", "pages": [26]}
+]

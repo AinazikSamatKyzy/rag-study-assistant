@@ -7,3 +7,6 @@ study/
 .claude/
 *.pdf
 *.pptx
+
+# Bundled sample notes (original content, safe to share)
+!samples/*.pdf

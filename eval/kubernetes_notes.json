@@ -1,0 +1,18 @@
+[
+  {"question": "Why are containers lighter than virtual machines?", "pages": [2]},
+  {"question": "Which Linux kernel features isolate a container?", "pages": [2]},
+  {"question": "Why should I install dependencies before copying my source code in a Dockerfile?", "pages": [3, 4]},
+  {"question": "What happens to files written inside a container when it is deleted?", "pages": [3]},
+  {"question": "How do I stop my virtualenv from being sent to the Docker build?", "pages": [4]},
+  {"question": "Where does Kubernetes store the state of the cluster?", "pages": [5]},
+  {"question": "Which component decides what node a pod runs on?", "pages": [5]},
+  {"question": "Do containers in the same pod share an IP address?", "pages": [6]},
+  {"question": "How can I roll back a bad release?", "pages": [7]},
+  {"question": "How do I expose my app outside the cluster?", "pages": [8]},
+  {"question": "Are Kubernetes secrets encrypted?", "pages": [9]},
+  {"question": "How do I keep data after a pod restarts?", "pages": [10]},
+  {"question": "What is the difference between a liveness and a readiness probe?", "pages": [11]},
+  {"question": "Why was my container OOMKilled?", "pages": [12]},
+  {"question": "How can the number of replicas grow automatically under load?", "pages": [13]},
+  {"question": "What is data drift and why does it matter?", "pages": [14]}
+]

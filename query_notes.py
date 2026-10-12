@@ -1,5 +1,6 @@
 """Search the existing Chroma notes database and print the top chunks."""
 
+import os
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -7,9 +8,11 @@ from pathlib import Path
 from langchain_chroma import Chroma
 from langchain_community.embeddings import FastEmbedEmbeddings
 
-CHROMA_DIR = Path(__file__).resolve().parent / "chroma_db"
-COLLECTION_NAME = "metro_ethernet_notes"
-DEFAULT_QUESTION = "What is Metro Ethernet?"
+# Overridable so a container can keep the database on a mounted volume.
+CHROMA_DIR = Path(os.environ.get("CHROMA_DIR", Path(__file__).resolve().parent / "chroma_db"))
+COLLECTION_NAME = "study_notes"
+EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+DEFAULT_QUESTION = "What is a pod in Kubernetes?"
 TOP_K = 3
 
 
@@ -21,7 +24,7 @@ def load_vectorstore() -> Chroma:
             f"No Chroma database at {CHROMA_DIR}. Run ingest_notes.py first."
         )
 
-    embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+    embeddings = FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
     return Chroma(
         persist_directory=str(CHROMA_DIR),
         embedding_function=embeddings,

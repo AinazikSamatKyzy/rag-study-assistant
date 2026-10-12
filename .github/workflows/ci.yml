@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  evaluate:
+    name: Retrieval quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Build vector DB from sample notes
+        run: python ingest_notes.py
+      - name: Evaluate retrieval (fail below 85%)
+        run: python eval_retrieval.py --min-hit-rate 0.85
+
+  deploy-test:
+    name: Build image and deploy to Kubernetes (kind)
+    needs: evaluate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/ainaziksamatkyzy/rag-study-assistant
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: ci
+      - name: Deploy app to the cluster
+        run: |
+          kind load docker-image $IMAGE:latest --name ci
+          kubectl apply -f k8s/namespace.yaml -f k8s/app.yaml
+          kubectl -n rag rollout status deployment/rag-app --timeout=180s
+      - name: Smoke test
+        run: |
+          kubectl -n rag port-forward service/rag-app 8080:80 &
+          sleep 3
+          curl --fail --retry 5 --retry-connrefused http://localhost:8080/healthz
+          curl --fail http://localhost:8080/ | grep -q "Study Assistant"
+      - name: Show pod logs on failure
+        if: failure()
+        run: kubectl -n rag logs deployment/rag-app --all-containers --tail=100
+      - name: Push image to GitHub Container Registry
+        if: github.event_name == 'push'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}

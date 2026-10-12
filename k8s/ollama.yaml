@@ -1,0 +1,75 @@
+# LLM server. Models live on a PersistentVolume so they survive pod restarts.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+  namespace: rag
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: rag
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # the volume is ReadWriteOnce, so old and new pods can't overlap
+  selector:
+    matchLabels: {app: ollama}
+  template:
+    metadata:
+      labels: {app: ollama}
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.12.3
+          ports:
+            - containerPort: 11434
+          resources:
+            requests: {cpu: "1", memory: 4Gi}
+            limits: {memory: 8Gi}
+          readinessProbe:
+            httpGet: {path: /api/tags, port: 11434}
+            periodSeconds: 10
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: ollama-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: rag
+spec:
+  selector: {app: ollama}
+  ports:
+    - port: 11434
+      targetPort: 11434
+---
+# One-off download of the model into the Ollama server.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model
+  namespace: rag
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: pull
+          image: ollama/ollama:0.12.3
+          args: ["pull", "gemma3:4b"]
+          env:
+            - name: OLLAMA_HOST
+              value: http://ollama:11434

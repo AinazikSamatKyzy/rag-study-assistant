@@ -1,0 +1,33 @@
+# Local run: docker compose up --build, then open http://localhost:5000
+# The first start downloads the LLM (about 3 GB) into the ollama volume.
+services:
+  ollama:
+    image: ollama/ollama:0.12.3
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      retries: 10
+
+  ollama-pull:
+    image: ollama/ollama:0.12.3
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    command: ["pull", "gemma3:4b"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      OLLAMA_MODEL: gemma3:4b
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+
+volumes:
+  ollama:

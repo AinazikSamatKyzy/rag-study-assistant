@@ -1,5 +1,6 @@
 """Load a lecture PDF, chunk it, and store it in local Chroma."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -8,10 +9,13 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# Default PDF; pass a different path as an argument: python ingest_notes.py my_notes.pdf
-PDF_PATH = Path(__file__).resolve().parent / "Chap3_Metro_Ethernet.pdf"
-CHROMA_DIR = Path(__file__).resolve().parent / "chroma_db"
-COLLECTION_NAME = "metro_ethernet_notes"
+from query_notes import CHROMA_DIR, COLLECTION_NAME, DEFAULT_QUESTION, EMBEDDING_MODEL
+
+# Default PDF is the bundled sample notes. Use your own with an argument
+# (python ingest_notes.py my_notes.pdf) or the NOTES_PDF environment variable.
+PDF_PATH = Path(os.environ.get(
+    "NOTES_PDF", Path(__file__).resolve().parent / "samples" / "kubernetes_notes.pdf"
+))
 
 
 def ingest(pdf_path: Path) -> None:
@@ -26,7 +30,7 @@ def ingest(pdf_path: Path) -> None:
     )
     chunks = splitter.split_documents(documents)
 
-    embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+    embeddings = FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
     # Start fresh so re-running (or switching PDFs) replaces chunks instead of duplicating them.
     Chroma(
         persist_directory=str(CHROMA_DIR),
@@ -42,7 +46,7 @@ def ingest(pdf_path: Path) -> None:
     print(f"Loaded {len(documents)} pages from {pdf_path.name}")
     print(f"Stored {len(chunks)} chunks in {CHROMA_DIR}")
 
-    preview = vectorstore.similarity_search("What is Metro Ethernet?", k=1)
+    preview = vectorstore.similarity_search(DEFAULT_QUESTION, k=1)
     if preview:
         print("\nSample retrieved chunk:\n")
         print(preview[0].page_content[:500])

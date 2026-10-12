@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Assistant</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --surface: #ffffff; --ink: #1c1b18; --muted: #6b6860;
+    --line: #e4e1d8; --accent: #2f5d50; --accent-soft: #e3ece8; --danger: #a33a2a;
+    --danger-soft: #f8e6e2; --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151614; --surface: #1e201d; --ink: #ecebe6; --muted: #9a978e;
+      --line: #2e302c; --accent: #7fbfa8; --accent-soft: #233029; --danger: #e08a7a;
+      --danger-soft: #3a2420;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--surface);
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 650; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  header h1 { white-space: nowrap; }
+  .status { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  @media (max-width: 560px) { header h1 span, #statusText { display: none; } }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: #3a9a6e; } .dot.bad { background: var(--danger); }
+  button.ghost {
+    background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px;
+    padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  button.ghost:hover { color: var(--ink); border-color: var(--muted); }
+
+  main { flex: 1; overflow-y: auto; }
+  .thread { max-width: 760px; margin: 0 auto; padding: 28px 16px 24px; }
+
+  .empty { text-align: center; padding: 8vh 0 0; }
+  .empty h2 { font-size: 26px; margin: 0 0 6px; font-weight: 650; }
+  .empty p { color: var(--muted); margin: 0 0 26px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .q { display: flex; justify-content: flex-end; margin: 22px 0 10px; }
+  .q div {
+    background: var(--accent); color: var(--surface); padding: 10px 15px;
+    border-radius: var(--radius) var(--radius) 4px var(--radius); max-width: 85%;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .a {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .a .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .a.error { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+  .a.error code { background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 5px; }
+
+  .sources { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .sources .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+  details.src { border: 1px solid var(--line); border-radius: 10px; margin-top: 6px; }
+  details.src summary {
+    cursor: pointer; padding: 8px 12px; font-size: 14px; list-style: none;
+    display: flex; gap: 10px; align-items: baseline;
+  }
+  details.src summary::-webkit-details-marker { display: none; }
+  details.src summary b {
+    flex: none; background: var(--accent-soft); color: var(--accent);
+    font-size: 12px; padding: 2px 8px; border-radius: 6px; font-weight: 600;
+  }
+  details.src summary span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  details.src[open] summary span { display: none; }
+  details.src pre {
+    margin: 0; padding: 4px 12px 12px; white-space: pre-wrap; font: 13.5px/1.55 inherit;
+    color: var(--muted); max-height: 260px; overflow-y: auto;
+  }
+
+  .thinking { display: flex; gap: 6px; padding: 4px 0; }
+  .thinking i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
+  .thinking i:nth-child(2) { animation-delay: .2s; } .thinking i:nth-child(3) { animation-delay: .4s; }
+  .thinking + small { color: var(--muted); font-size: 13px; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  footer { border-top: 1px solid var(--line); background: var(--surface); padding: 14px 16px 18px; }
+  form { max-width: 760px; margin: 0 auto; display: flex; gap: 10px; align-items: flex-end; }
+  textarea {
+    flex: 1; resize: none; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);
+    color: var(--ink); font: inherit; padding: 11px 14px; height: 46px; max-height: 160px; outline: none;
+    overflow-y: hidden; min-width: 0;
+  }
+  textarea:focus { border-color: var(--accent); }
+  button.send {
+    background: var(--accent); color: var(--surface); border: 0; border-radius: 12px;
+    padding: 0 18px; height: 46px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.send:disabled { opacity: .45; cursor: default; }
+  .hint { max-width: 760px; margin: 6px auto 0; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Study Assistant <span>· Metro Ethernet notes</span></h1>
+  <div class="status">
+    <i class="dot" id="dot" title=""></i><span id="statusText">Checking…</span>
+    <button class="ghost" id="clear" hidden>New chat</button>
+  </div>
+</header>
+
+<main id="scroller">
+  <div class="thread" id="thread">
+    <div class="empty" id="empty">
+      <h2>Ask your notes anything</h2>
+      <p>Answers come only from your lecture slides, with the pages they came from.</p>
+      <div class="chips">
+        <button class="chip">What is Metro Ethernet?</button>
+        <button class="chip">What are the issues with current MANs?</button>
+        <button class="chip">What topology does a MAN have?</button>
+        <button class="chip">What is required to deploy Metro Ethernet?</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <form id="form">
+    <textarea id="input" rows="1" placeholder="Ask your notes…" autofocus></textarea>
+    <button class="send" id="send" type="submit" disabled>Ask</button>
+  </form>
+  <div class="hint">Enter to send · Shift+Enter for a new line</div>
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const thread = $("thread"), input = $("input"), send = $("send"), empty = $("empty");
+let busy = false;
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+const scrollDown = () => $("scroller").scrollTo({ top: 1e9, behavior: "smooth" });
+
+async function checkStatus() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    $("dot").className = "dot " + (s.ok ? "ok" : "bad");
+    $("dot").title = $("statusText").textContent = s.ok ? `${s.chunks} chunks · ${s.model}` : "Not ready: " + (s.error || "unknown error");
+  } catch {
+    $("dot").className = "dot bad";
+    $("statusText").textContent = "Server offline";
+  }
+}
+
+function renderSources(sources) {
+  const box = el("div", "sources");
+  box.append(el("div", "label", "Sources"));
+  for (const s of sources) {
+    const d = el("details", "src"), sum = el("summary");
+    sum.append(el("b", null, s.page != null ? `Slide ${s.page}` : "Notes"), el("span", null, s.text.replace(/\s+/g, " ")));
+    d.append(sum, el("pre", null, s.text));
+    box.append(d);
+  }
+  return box;
+}
+
+async function ask(question) {
+  if (busy || !question.trim()) return;
+  busy = true; send.disabled = true;
+  empty.hidden = true; $("clear").hidden = false;
+
+  const q = el("div", "q"); q.append(el("div", null, question));
+  const a = el("div", "a");
+  const dots = el("div", "thinking"); dots.append(el("i"), el("i"), el("i"));
+  a.append(dots, el("small", null, "Searching notes and writing an answer… (the first one can take a minute)"));
+  thread.append(q, a); scrollDown();
+
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const data = await res.json();
+    a.replaceChildren();
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    a.append(el("div", "text", data.answer));
+    if (data.sources?.length) a.append(renderSources(data.sources));
+  } catch (err) {
+    a.replaceChildren(); a.classList.add("error");
+    // Put the suggested shell command in a code tag so it's easy to copy.
+    const [msg, cmd] = String(err.message).split("Run: ");
+    a.append(document.createTextNode(msg + (cmd ? "Run: " : "")));
+    if (cmd) a.append(el("code", null, cmd));
+  }
+  busy = false; send.disabled = !input.value.trim();
+  scrollDown(); input.focus();
+}
+
+function autosize() {
+  input.style.height = "auto";
+  input.style.height = Math.max(46, input.scrollHeight + 2) + "px";
+  input.style.overflowY = input.scrollHeight > 160 ? "auto" : "hidden";
+}
+input.addEventListener("input", () => { send.disabled = busy || !input.value.trim(); autosize(); });
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); }
+});
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const v = input.value; input.value = ""; autosize(); ask(v);
+});
+document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => ask(c.textContent)));
+$("clear").addEventListener("click", () => {
+  thread.querySelectorAll(".q, .a").forEach((n) => n.remove());
+  empty.hidden = false; $("clear").hidden = true; input.focus();
+});
+checkStatus();
+</script>
+</body>
+</html>

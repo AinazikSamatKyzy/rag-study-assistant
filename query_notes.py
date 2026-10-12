@@ -1,5 +1,7 @@
 """Search the existing Chroma notes database and print the top chunks."""
 
+import sys
+from functools import lru_cache
 from pathlib import Path
 
 from langchain_chroma import Chroma
@@ -7,25 +9,30 @@ from langchain_community.embeddings import FastEmbedEmbeddings
 
 CHROMA_DIR = Path(__file__).resolve().parent / "chroma_db"
 COLLECTION_NAME = "metro_ethernet_notes"
-QUESTION = "What is Metro Ethernet?"
+DEFAULT_QUESTION = "What is Metro Ethernet?"
 TOP_K = 3
 
 
-def query_notes() -> None:
+# Cached so the web app loads the embedding model once, not on every question.
+@lru_cache(maxsize=1)
+def load_vectorstore() -> Chroma:
     if not CHROMA_DIR.exists():
         raise FileNotFoundError(
             f"No Chroma database at {CHROMA_DIR}. Run ingest_notes.py first."
         )
 
     embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
-    vectorstore = Chroma(
+    return Chroma(
         persist_directory=str(CHROMA_DIR),
         embedding_function=embeddings,
         collection_name=COLLECTION_NAME,
     )
 
-    results = vectorstore.similarity_search(QUESTION, k=TOP_K)
-    print(f"Question: {QUESTION}\n")
+
+def query_notes(question: str) -> None:
+    vectorstore = load_vectorstore()
+    results = vectorstore.similarity_search(question, k=TOP_K)
+    print(f"Question: {question}\n")
     if not results:
         print("No matching chunks found.")
         return
@@ -40,4 +47,8 @@ def query_notes() -> None:
 
 
 if __name__ == "__main__":
-    query_notes()
+    # Windows consoles may default to a legacy codepage that can't print PDF symbols.
+    sys.stdout.reconfigure(encoding="utf-8")
+    # Usage: python query_notes.py "your question here"
+    question = " ".join(sys.argv[1:]).strip() or DEFAULT_QUESTION
+    query_notes(question)

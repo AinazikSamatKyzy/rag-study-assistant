@@ -18,6 +18,7 @@ The prompt tells the model to answer using only the retrieved notes, and to repl
 | `ingest_notes.py` | Loads the PDF, splits it into chunks, embeds them, and saves them to `chroma_db/` |
 | `query_notes.py` | Retrieval only: prints the chunks that match a question (useful for debugging) |
 | `ask_notes.py` | Full RAG: retrieves chunks and has the local LLM write an answer |
+| `eval_retrieval.py` | Retrieval test: 13 questions with known answer slides, reports the hit rate |
 | `app.py` | Flask web server: `GET /`, `GET /api/status`, `POST /api/ask` |
 | `static/index.html` | Chat interface |
 
@@ -52,10 +53,17 @@ python ask_notes.py "What is Metro Ethernet?"
 python query_notes.py "What is Metro Ethernet?"
 ```
 
+**Evaluate retrieval** (a few seconds, no LLM needed)
+```
+python eval_retrieval.py
+```
+Current result: 12/13 (92%) of questions retrieve the correct slide in the top 3.
+
 To use a different Ollama model, set `OLLAMA_MODEL` (for example `gemma3:4b`). If the chosen model isn't installed, the app falls back to any installed model.
 
 ## Limitations and next steps
 
 - Only text is read from the slides; diagrams are ignored.
 - Each question is independent (no chat memory).
-- Ideas to add: streaming answers, hybrid keyword + vector search, PDF upload, and an evaluation set of questions with known answers.
+- Slides that are mostly diagrams (like slide 19) produce near-empty chunks that still get retrieved and crowd out useful ones.
+- Ideas to add: streaming answers, hybrid keyword + vector search, filtering out near-empty chunks, and PDF upload.

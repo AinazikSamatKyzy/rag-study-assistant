@@ -4,7 +4,11 @@ Ask questions about your lecture slides and get answers drawn only from them, wi
 
 Built with LangChain, Chroma, FastEmbed (`BAAI/bge-small-en-v1.5`), Ollama (`llama3`) and Flask.
 
+![Chat UI answering a question with its source slides, and refusing a question the notes don't cover](media/1-app-answer.png)
+
 ## How it works
+
+![Architecture: ingestion and answering pipeline](media/2-architecture.png)
 
 ```
 Ingestion (once)     PDF -> pages -> chunks (1000 chars, 200 overlap) -> embeddings -> Chroma
@@ -60,6 +64,8 @@ python query_notes.py "What is Metro Ethernet?"
 python eval_retrieval.py
 ```
 Current result: 12/13 (92%) of questions retrieve the correct slide in the top 3.
+
+![Retrieval evaluation output](media/3-retrieval-eval.png)
 
 To use a different Ollama model, set `OLLAMA_MODEL` (for example `gemma3:4b`). If the chosen model isn't installed, the app falls back to any installed model.
 
